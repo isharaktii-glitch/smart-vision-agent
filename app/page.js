@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import FaceDetector from './components/FaceDetector';
 
 export default function Home() {
   const [features, setFeatures] = useState({
@@ -27,34 +28,38 @@ export default function Home() {
 
       <div style={{ marginTop: '30px' }}>
         {featureList.map((f) => (
-          <div
-            key={f.key}
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '15px',
-              marginBottom: '10px',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              background: features[f.key] ? '#e6f7e6' : '#f9f9f9',
-            }}
-          >
-            <span style={{ fontSize: '14px' }}>{f.label}</span>
-            <button
-              onClick={() => toggleFeature(f.key)}
+          <div key={f.key} style={{ marginBottom: '10px' }}>
+            <div
               style={{
-                padding: '8px 16px',
-                borderRadius: '20px',
-                border: 'none',
-                color: 'white',
-                background: features[f.key] ? '#22c55e' : '#9ca3af',
-                fontWeight: 'bold',
-                cursor: 'pointer',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '15px',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                background: features[f.key] ? '#e6f7e6' : '#f9f9f9',
               }}
             >
-              {features[f.key] ? 'ON' : 'OFF'}
-            </button>
+              <span style={{ fontSize: '14px' }}>{f.label}</span>
+              <button
+                onClick={() => toggleFeature(f.key)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '20px',
+                  border: 'none',
+                  color: 'white',
+                  background: features[f.key] ? '#22c55e' : '#9ca3af',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                }}
+              >
+                {features[f.key] ? 'ON' : 'OFF'}
+              </button>
+            </div>
+
+            {f.key === 'faceDetection' && features.faceDetection && (
+              <FaceDetector onClose={() => toggleFeature('faceDetection')} />
+            )}
           </div>
         ))}
       </div>
