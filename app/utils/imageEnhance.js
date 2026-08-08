@@ -4,11 +4,24 @@
 export function getHighResConstraints() {
   return {
     video: {
-      width: { ideal: 1920 },
-      height: { ideal: 1080 },
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
       facingMode: 'user',
     },
   };
+}
+
+// Camera start කරනවා — HD try කරලා, fail උනොත් basic camera එකට fallback වෙනවා
+export async function startCameraWithFallback(videoRef) {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia(getHighResConstraints());
+    videoRef.current.srcObject = stream;
+    return stream;
+  } catch (err) {
+    const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
+    videoRef.current.srcObject = fallbackStream;
+    return fallbackStream;
+  }
 }
 
 // Canvas එකක brightness/contrast enhance කරන function එක
@@ -17,7 +30,6 @@ export function enhanceCanvas(canvas) {
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imageData.data;
 
-  // Auto brightness/contrast: histogram min/max සොයාගෙන stretch කරනවා
   let min = 255, max = 0;
   for (let i = 0; i < data.length; i += 4) {
     const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
@@ -30,9 +42,7 @@ export function enhanceCanvas(canvas) {
   for (let i = 0; i < data.length; i += 4) {
     for (let c = 0; c < 3; c++) {
       let val = data[i + c];
-      // Contrast stretch
       val = ((val - min) / range) * 255;
-      // Brightness boost (dark images වලට ටිකක් වැඩිපුර)
       val = val * 1.15;
       data[i + c] = Math.min(255, Math.max(0, val));
     }
@@ -54,7 +64,7 @@ export function cropAndEnhanceFace(sourceCanvas, box, padding = 0.3) {
   const cropH = Math.min(sourceCanvas.height - cropY, height + padY * 2);
 
   const outCanvas = document.createElement('canvas');
-  const targetSize = 512; // enlarge කරලා Gemini ට clear image එකක් යවනවා
+  const targetSize = 512;
   outCanvas.width = targetSize;
   outCanvas.height = targetSize;
 
@@ -65,7 +75,7 @@ export function cropAndEnhanceFace(sourceCanvas, box, padding = 0.3) {
   return outCanvas;
 }
 
-// Full frame එකක් enhance කරන convenience function එක (face-crop නැති අවස්ථා සඳහා)
+// Full frame එකක් enhance කරන convenience function එක
 export function enhanceFullFrame(videoElement) {
   const canvas = document.createElement('canvas');
   canvas.width = videoElement.videoWidth;
