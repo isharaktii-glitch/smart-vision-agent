@@ -1,6 +1,6 @@
 'use client';
 import { useRef, useState } from 'react';
-import { getHighResConstraints, enhanceFullFrame } from '../utils/imageEnhance';
+import { startCameraWithFallback, enhanceFullFrame } from '../utils/imageEnhance';
 
 export default function MoodAnalyzer({ onClose }) {
   const videoRef = useRef(null);
@@ -11,12 +11,11 @@ export default function MoodAnalyzer({ onClose }) {
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia(getHighResConstraints());
-      videoRef.current.srcObject = stream;
+      await startCameraWithFallback(videoRef);
       videoRef.current.onloadedmetadata = () => {
         videoRef.current.play();
         setCameraOn(true);
-        setStatus('Photo ගන්න ready (HD + Enhanced mode)');
+        setStatus('Photo ගන්න ready (Enhanced mode)');
       };
     } catch (err) {
       setStatus('Camera error: ' + err.message);
@@ -25,8 +24,6 @@ export default function MoodAnalyzer({ onClose }) {
 
   const capturePhoto = async () => {
     const video = videoRef.current;
-
-    // Enhanced (brightness/contrast improved) frame එක capture කරනවා
     const enhancedCanvas = enhanceFullFrame(video);
     const imageData = enhancedCanvas.toDataURL('image/jpeg', 0.9);
 
