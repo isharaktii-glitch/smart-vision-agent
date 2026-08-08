@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import FaceDetector from './components/FaceDetector';
+import MoodAnalyzer from './components/MoodAnalyzer';
 
 export default function Home() {
   const [features, setFeatures] = useState({
@@ -59,6 +60,10 @@ export default function Home() {
 
             {f.key === 'faceDetection' && features.faceDetection && (
               <FaceDetector onClose={() => toggleFeature('faceDetection')} />
+            )}
+
+            {f.key === 'moodAnalysis' && features.moodAnalysis && (
+              <MoodAnalyzer onClose={() => toggleFeature('moodAnalysis')} />
             )}
           </div>
         ))}
