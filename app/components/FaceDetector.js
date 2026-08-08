@@ -1,6 +1,6 @@
 'use client';
 import { useRef, useState } from 'react';
-import { getHighResConstraints, enhanceFullFrame } from '../utils/imageEnhance';
+import { startCameraWithFallback, enhanceFullFrame } from '../utils/imageEnhance';
 
 export default function FaceDetector({ onClose }) {
   const videoRef = useRef(null);
@@ -17,10 +17,9 @@ export default function FaceDetector({ onClose }) {
 
       await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
       setModelsLoaded(true);
-      setStatus('Starting camera (HD mode)...');
+      setStatus('Starting camera...');
 
-      const stream = await navigator.mediaDevices.getUserMedia(getHighResConstraints());
-      videoRef.current.srcObject = stream;
+      await startCameraWithFallback(videoRef);
 
       videoRef.current.onloadedmetadata = () => {
         videoRef.current.play();
@@ -44,7 +43,6 @@ export default function FaceDetector({ onClose }) {
     const interval = setInterval(async () => {
       if (!video || video.paused || video.ended) return;
 
-      // Enhanced frame එකෙන් detect කරනවා (dark/distant faces වඩා හොඳින් අහුවෙන්න)
       const enhancedCanvas = enhanceFullFrame(video);
 
       const detections = await faceapi.detectAllFaces(
