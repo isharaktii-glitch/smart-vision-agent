@@ -1,5 +1,6 @@
 'use client';
 import { useRef, useState } from 'react';
+import { getHighResConstraints, enhanceFullFrame } from '../utils/imageEnhance';
 
 export default function FaceDetector({ onClose }) {
   const videoRef = useRef(null);
@@ -16,14 +17,14 @@ export default function FaceDetector({ onClose }) {
 
       await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
       setModelsLoaded(true);
-      setStatus('Starting camera...');
+      setStatus('Starting camera (HD mode)...');
 
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const stream = await navigator.mediaDevices.getUserMedia(getHighResConstraints());
       videoRef.current.srcObject = stream;
 
       videoRef.current.onloadedmetadata = () => {
         videoRef.current.play();
-        setStatus('Detecting faces...');
+        setStatus('Detecting faces (dark/distance enhanced)...');
         detectLoop(faceapi);
       };
     } catch (err) {
@@ -42,9 +43,13 @@ export default function FaceDetector({ onClose }) {
 
     const interval = setInterval(async () => {
       if (!video || video.paused || video.ended) return;
+
+      // Enhanced frame එකෙන් detect කරනවා (dark/distant faces වඩා හොඳින් අහුවෙන්න)
+      const enhancedCanvas = enhanceFullFrame(video);
+
       const detections = await faceapi.detectAllFaces(
-        video,
-        new faceapi.TinyFaceDetectorOptions()
+        enhancedCanvas,
+        new faceapi.TinyFaceDetectorOptions({ inputSize: 512, scoreThreshold: 0.3 })
       );
       setFaceCount(detections.length);
 
@@ -52,7 +57,7 @@ export default function FaceDetector({ onClose }) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const resized = faceapi.resizeResults(detections, displaySize);
       faceapi.draw.drawDetections(canvas, resized);
-    }, 300);
+    }, 400);
 
     videoRef.current.dataset.intervalId = interval;
   };
