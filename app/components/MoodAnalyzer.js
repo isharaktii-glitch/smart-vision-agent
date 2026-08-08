@@ -1,9 +1,9 @@
 'use client';
 import { useRef, useState } from 'react';
+import { getHighResConstraints, enhanceFullFrame } from '../utils/imageEnhance';
 
 export default function MoodAnalyzer({ onClose }) {
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
   const [status, setStatus] = useState('Camera එක start කරන්න');
   const [moodResult, setMoodResult] = useState('');
   const [loading, setLoading] = useState(false);
@@ -11,12 +11,12 @@ export default function MoodAnalyzer({ onClose }) {
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const stream = await navigator.mediaDevices.getUserMedia(getHighResConstraints());
       videoRef.current.srcObject = stream;
       videoRef.current.onloadedmetadata = () => {
         videoRef.current.play();
         setCameraOn(true);
-        setStatus('Photo ගන්න ready');
+        setStatus('Photo ගන්න ready (HD + Enhanced mode)');
       };
     } catch (err) {
       setStatus('Camera error: ' + err.message);
@@ -25,16 +25,13 @@ export default function MoodAnalyzer({ onClose }) {
 
   const capturePhoto = async () => {
     const video = videoRef.current;
-    const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    const imageData = canvas.toDataURL('image/jpeg', 0.8);
+    // Enhanced (brightness/contrast improved) frame එක capture කරනවා
+    const enhancedCanvas = enhanceFullFrame(video);
+    const imageData = enhancedCanvas.toDataURL('image/jpeg', 0.9);
 
     setLoading(true);
-    setStatus('Gemini AI mood analyze කරනවා...');
+    setStatus('Gemini AI mood analyze කරනවා (enhanced image)...');
     setMoodResult('');
 
     try {
@@ -72,7 +69,6 @@ export default function MoodAnalyzer({ onClose }) {
       <div style={{ position: 'relative', width: '100%', maxWidth: '400px' }}>
         <video ref={videoRef} style={{ width: '100%', borderRadius: '8px' }} muted playsInline />
       </div>
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
 
       {moodResult && (
         <div style={{ marginTop: '10px', padding: '12px', background: '#e6f7e6', borderRadius: '8px' }}>
